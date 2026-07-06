@@ -1,0 +1,90 @@
+:root {
+  --page: #060a10;
+  --panel: #0c1219;
+  --panel-2: #101824;
+  --subtle: #121a26;
+  --ink: #d4dce8;
+  --muted: #4e6178;
+  --muted-strong: #8899ad;
+  --line: #1a2740;
+  --line-strong: #253650;
+  --accent: #00d4aa;
+  --accent-strong: #4da6ff;
+  --accent-soft: rgba(0, 212, 170, 0.08);
+  --accent-glow: rgba(0, 212, 170, 0.15);
+  --good: #00d4aa;
+  --good-soft: rgba(0, 212, 170, 0.1);
+  --warn: #e8b84a;
+  --warn-soft: rgba(232, 184, 74, 0.1);
+  --bad: #e85c6a;
+  --bad-soft: rgba(232, 92, 106, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glow: 0 0 20px rgba(0, 212, 170, 0.06);
+  color: var(--ink);
+  background: var(--page);
+  font-family:
+    "JetBrains Mono", "Fira Code", "SF Mono", "Cascadia Code",
+    ui-monospace, monospace;
+  font-size: 13px;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--page);
+}
+
+button,
+input {
+  letter-spacing: 0.01em;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 212, 170, 0.08); }
+  50% { box-shadow: 0 0 16px rgba(0, 212, 170, 0.15); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+::selection {
+  background: rgba(0, 212, 170, 0.25);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
+}
