@@ -1236,10 +1236,10 @@ function PlaidLinkButton({ linkToken, onSuccess, onError, receivedRedirectUri })
 function SettingsView() {
   return (
     <section className="panel full-width settings-grid">
-      <SettingRow title="Server URL" detail="http://localhost:8787" />
+      <SettingRow title="Server URL" detail="Son of Francis · 100.96.116.18:8787" />
       <SettingRow title="Plaid environment" detail="Production, with CSV fallback" />
       <SettingRow title="Duplicate detection" detail="Match date, amount, merchant, and account" />
-      <SettingRow title="AI mode" detail="Summaries and categorization suggestions require review" />
+      <SettingRow title="AI mode" detail="Local Ollama on Francis via authenticated Tailscale gateway" />
       <SettingRow title="Backup cadence" detail="Weekly encrypted SQLite backup" />
     </section>
   )

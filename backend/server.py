@@ -543,4 +543,8 @@ def plaid_status():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8787)
+    uvicorn.run(
+        app,
+        host=os.getenv("LEDGERONE_HOST", "127.0.0.1"),
+        port=int(os.getenv("LEDGERONE_PORT", "8787")),
+    )

@@ -26,7 +26,7 @@ dist-ssr
 # Backend
 backend/.env
 backend/*.db
-backend/__pycache__
+__pycache__/
 
 # Internal working log — contains real account balances, merchants, and account mask. Keep local.
 SESSION_LOG.md

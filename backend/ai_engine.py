@@ -1,19 +1,28 @@
-"""Local AI engine using Ollama for categorization and insights."""
+"""Local AI engine using Francis's authenticated OpenAI-compatible gateway."""
 
 import json
+import os
 from collections.abc import AsyncGenerator
 
 import httpx
 
-OLLAMA_URL = "http://localhost:11434"
-# Standardized on Arthur's GPU-optimized model (qwen3.5-gpu: num_gpu 99 + num_ctx 24576
+LLM_BASE_URL = os.getenv("LEDGERONE_LLM_BASE_URL", "http://127.0.0.1:5560/v1").rstrip("/")
+LLM_API_KEY = os.getenv("LEDGERONE_LLM_API_KEY", "")
+# Standardized on Arthur's GPU-optimized model (qwen3.5-gpu: num_gpu 99 + num_ctx 65536
 # baked in, loads 100% on the RTX 3070, no CPU spill, shared resident instance across apps).
-MODEL_HEAVY = "qwen3.5-gpu"     # structured JSON tasks (categorize, budget draft)
-MODEL_FAST = "qwen3.5-gpu"      # conversational tasks (insights, chat)
+MODEL_HEAVY = os.getenv("LEDGERONE_LLM_MODEL", "qwen3.5-gpu:latest")
+MODEL_FAST = MODEL_HEAVY
+
+
+def _headers() -> dict[str, str]:
+    headers = {"Content-Type": "application/json"}
+    if LLM_API_KEY:
+        headers["Authorization"] = f"Bearer {LLM_API_KEY}"
+    return headers
 
 
 async def _chat(system: str, user: str, temperature: float = 0.3, model: str = MODEL_HEAVY) -> str:
-    """Send a non-streaming chat request to Ollama."""
+    """Send a non-streaming request through the Francis LLM gateway."""
     payload = {
         "model": model,
         "messages": [
@@ -21,20 +30,24 @@ async def _chat(system: str, user: str, temperature: float = 0.3, model: str = M
             {"role": "user", "content": user},
         ],
         "stream": False,
-        "options": {"temperature": temperature},
+        "temperature": temperature,
     }
 
     async with httpx.AsyncClient(timeout=120.0) as client:
-        resp = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+        resp = await client.post(
+            f"{LLM_BASE_URL}/chat/completions",
+            headers=_headers(),
+            json=payload,
+        )
         resp.raise_for_status()
-        return resp.json()["message"]["content"]
+        return resp.json()["choices"][0]["message"]["content"]
 
 
 async def _chat_stream(system: str, user: str, temperature: float = 0.3, model: str = MODEL_FAST) -> AsyncGenerator[str, None]:
-    """Send a streaming chat request to Ollama, yielding content chunks.
+    """Stream a chat request through the Francis gateway.
 
     Cancellation-safe: if the caller stops iterating (client disconnect),
-    the httpx stream and Ollama request are cleaned up automatically.
+    the HTTP stream and gateway request are cleaned up automatically.
     """
     payload = {
         "model": model,
@@ -43,19 +56,29 @@ async def _chat_stream(system: str, user: str, temperature: float = 0.3, model: 
             {"role": "user", "content": user},
         ],
         "stream": True,
-        "options": {"temperature": temperature},
+        "temperature": temperature,
     }
 
     async with httpx.AsyncClient(timeout=120.0) as client:
-        async with client.stream("POST", f"{OLLAMA_URL}/api/chat", json=payload) as resp:
+        async with client.stream(
+            "POST",
+            f"{LLM_BASE_URL}/chat/completions",
+            headers=_headers(),
+            json=payload,
+        ) as resp:
             resp.raise_for_status()
             try:
                 async for line in resp.aiter_lines():
-                    if not line.strip():
+                    line = line.strip()
+                    if not line or not line.startswith("data:"):
                         continue
+                    data_text = line.removeprefix("data:").strip()
+                    if data_text == "[DONE]":
+                        break
                     try:
-                        data = json.loads(line)
-                        content = data.get("message", {}).get("content", "")
+                        data = json.loads(data_text)
+                        choices = data.get("choices", [])
+                        content = choices[0].get("delta", {}).get("content", "") if choices else ""
                         if content:
                             yield content
                     except json.JSONDecodeError:
